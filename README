@@ -1,0 +1,33 @@
+
+NuPostgreSQL is a small portable wrapper for the PostgreSQL C interface. 
+
+	
+REQUIREMENTS
+
+NuPostgreSQL requires Nu and nuke, the Nu build tool. To obtain
+Nu, please visit http://programming.nu or get the source
+from the Nu git repository on github:
+	http://github.com/timburks/nu
+	
+NuPostgreSQL requires PostgreSQL. Before building NuPostgreSQL, please 
+be sure that PostgreSQL is installed on your system. The
+default build configuration expects PostgreSQL to be installed
+in /usr/local/pgsql.
+	
+The primary NuPostgreSQL repository is on github:
+	http://github.com/timburks/nupostgresql
+
+	
+INSTALLATION
+
+After installing all prerequisites, build the NuPostgreSQL framework
+by typing "nuke" in the top-level NuPostgreSQL directory.
+
+
+AUTHOR
+
+NuPostgreSQL was written by Tim Burks.
+
+NuPostgreSQL is released under the Apache License, version 2.0.
+
+Copyright 2008, Neon Design Technology, Inc.
