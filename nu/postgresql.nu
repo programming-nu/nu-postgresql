@@ -17,7 +17,15 @@
 
 (class PGFieldType (ivar-accessors))
 
-(class PGResult (ivar-accessors))
+(class PGResult (ivar-accessors)
+     (- (id) dictionaryForTuple:(int)i is
+        (set d (dict))
+        ((self fieldTypes) eachWithIndex:
+         (do (ft j)
+             (set key (ft name))
+             (set value (self valueOfTuple:i field:j))
+             (d setObject:value forKey:key)))
+        d))
 
 (class PGConnection (ivar-accessors)
      ;; Perform a query and return the result as an array of dictionaries.
@@ -25,32 +33,31 @@
      (- (id) queryAsArray:(id) query is
         (set result (self exec:query))
         (if result
-            (then
-                 (set a (array))
-                 ((result tupleCount) times:
-                  (do (i)
-                      (set d (dict))
-                      ((result fieldTypes) eachWithIndex:
-                       (do (ft j)
-                           (set key (ft name))
-                           (set value (result valueOfTuple:i field:j))
-                           (d setObject:value forKey:key)))
-                      (a addObject:d)))
-                 a)
+            (then (set a (array))
+                  ((result tupleCount) times:
+                   (do (i)
+                       (a addObject: (result dictionaryForTuple:i))))
+                  a)
+            (else nil)))
+     
+     ;; Perform a query and return the result as a dictionary of dictionaries,
+     ;; with the top-level dictionary keyed by the specified key.
+     ;; Each row of a query result is returned as a dictionary.
+     (- (id) queryAsDictionary:(id) query withKey:(id) key is
+        (set result (self exec:query))
+        (if result
+            (then (set d (dict))
+                  ((result tupleCount) times:
+                   (do (i)
+                       (set row (result dictionaryForTuple:i))
+                       (d setValue:row forKey:(row valueForKey:key))))
+                  d)
+            (else nil)))
+     
+     ;; Perform a query and return a single result as a dictionary.
+     ;; Returns nil if multiple matches exist.
+     (- (id) queryAsValue:(id) query is
+        (set result (self exec:query))
+        (if (eq (result tupleCount) 1)
+            (then (result dictionaryForTuple:0))
             (else nil))))
-
-(if 0 ;; FUTURE
-    ;; Perform a query and return the result as a dictionary of dictionaries,
-    ;; with the top-level dictionary keyed by the specified key.
-    ;; Each row of a query result is returned as a dictionary.
-    (- (id) queryAsDictionary:(id) query withKey:(id) key is
-       (set result (self query:query))
-       (set d (dict))
-       (while (set row (result nextRowAsDictionary))
-              (d setValue:row forKey:(row valueForKey:key)))
-       d)
-    
-    ;; Perform a query and return a single result as a dictionary.
-    (- (id) queryAsValue:(id) query is
-       (set result (self query:query))
-       (result nextRowAsDictionary)))
