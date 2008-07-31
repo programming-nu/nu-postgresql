@@ -1,4 +1,5 @@
 #import <Foundation/Foundation.h>
+#import <Nu/Nu.h>
 #include "libpq-fe.h"
 
 @interface PGFieldType : NSObject
@@ -144,6 +145,16 @@ void notice_processor(void *arg, const char *message)
 }
 
 @implementation PGConnection
+
++ (void) load
+{
+    static int initialized = 0;
+    if (!initialized) {
+        initialized = 1;
+        [Nu loadNuFile:@"postgresql" fromBundleWithIdentifier:@"nu.programming.nupostgresql" withContext:nil];
+    }
+}
+
 
 - (id) init
 {
