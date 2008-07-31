@@ -1,6 +1,45 @@
 #import <Foundation/Foundation.h>
 #import <Nu/Nu.h>
 #include "libpq-fe.h"
+#include "ecpgtype.h"
+
+const char *nameOfType(enum ECPGttype code)
+{
+    switch (code) {
+        case ECPGt_char: return "char";
+        case ECPGt_unsigned_char: return "unsigned char";
+        case ECPGt_short: return "short";
+        case ECPGt_unsigned_short: return "unsigned short";
+        case ECPGt_int: return "int";
+        case ECPGt_unsigned_int: return "unsigned int";
+        case ECPGt_long: return "long";
+        case ECPGt_unsigned_long: return "unsigned long";
+        case ECPGt_long_long: return "long long";
+        case ECPGt_unsigned_long_long: return "unsigned long long";
+        case ECPGt_bool: return "bool";
+        case ECPGt_float: return "float";
+        case ECPGt_double: return "double";
+        case ECPGt_varchar: return "varchar";
+        case ECPGt_varchar2: return "varchar2";
+        case ECPGt_numeric: return "numeric";     /* this is a decimal that stores its digits in a malloced array */
+        case ECPGt_decimal: return "decimal";     /* this is a decimal that stores its digits in a fixed array */
+        case ECPGt_date: return "date";
+        case ECPGt_timestamp: return "timestamp";
+        case ECPGt_interval: return "interval";
+        case ECPGt_array: return "array";
+        case ECPGt_struct: return "struct";
+        case ECPGt_union: return "union";
+                                                  /* sql descriptor: return ""; no C variable */
+        case ECPGt_descriptor: return "descriptor";
+        case ECPGt_char_variable: return "char variable";
+        case ECPGt_const: return "const";         /* a constant is needed sometimes */
+        case ECPGt_EOIT: return "EOIT";           /* End of insert types. */
+        case ECPGt_EORT: return "EORT";           /* End of result types. */
+                                                  /* no indicator */
+        case ECPGt_NO_INDICATOR: return "no indicator";
+    };
+    return "";
+}
 
 @interface PGFieldType : NSObject
 {
@@ -155,7 +194,6 @@ void notice_processor(void *arg, const char *message)
     }
 }
 
-
 - (id) init
 {
     [super init];
@@ -210,7 +248,35 @@ void notice_processor(void *arg, const char *message)
     PQfinish(connection);
 }
 
-- (PGResult *) exec:(NSString *)command
+- (PGResult *) query:(id)query withArguments:(id) arguments
+{
+    if (connection == nil) {
+        NSLog(@"There is no connection to a database.");
+        return nil;
+    }
+    PGresult *preparationResult = PQprepare(connection, "", [query cStringUsingEncoding:NSUTF8StringEncoding], 0, 0);
+    PGresult *descriptionResult = PQdescribePrepared(connection, "");
+    /*
+    NSLog(@"prepared query expects %d arguments", PQnparams(descriptionResult));
+    for (int i = 0; i < PQnparams(descriptionResult); i++) {
+        NSLog(@"param %d type %s", i, nameOfType(PQparamtype(descriptionResult, i)));
+    }
+    */
+    int paramCount = [arguments count];
+    char **paramValues = (char **) malloc (paramCount * sizeof(char *));
+    for (int i = 0; i < paramCount; i++) {
+        NSString *stringValue = [[arguments objectAtIndex:i] stringValue];
+        paramValues[i] = strdup([stringValue cStringUsingEncoding:NSUTF8StringEncoding]);
+    }
+    PGresult *result = PQexecPrepared(connection, "", paramCount, (const char **) paramValues, 0, 0, 0);
+    for (int i = 0; i < paramCount; i++) {
+        free(paramValues[i]);
+    }
+    free(paramValues);
+    return [[[PGResult alloc] initWithResult:result] autorelease];
+}
+
+- (PGResult *) query:(NSString *)command
 {
     if (connection == nil) {
         NSLog(@"There is no connection to a database.");
@@ -218,6 +284,12 @@ void notice_processor(void *arg, const char *message)
     }
     PGresult *result = PQexec(connection, [command cStringUsingEncoding:NSUTF8StringEncoding]);
     return [[[PGResult alloc] initWithResult:result] autorelease];
+}
+
+- (PGResult *) exec:(NSString *)command
+{
+    NSLog(@"exec: is deprecated, please use query: instead.");
+    return [self query:command];
 }
 
 @end

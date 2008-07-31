@@ -18,6 +18,13 @@
 (class PGFieldType (ivar-accessors))
 
 (class PGResult (ivar-accessors)
+     (- (id) array is
+        (set a (array))
+        ((self tupleCount) times:
+         (do (i)
+             (a addObject: (self dictionaryForTuple:i))))
+        a)
+     
      (- (id) dictionaryForTuple:(int)i is
         (set d (dict))
         ((self fieldTypes) eachWithIndex:
@@ -31,7 +38,7 @@
      ;; Perform a query and return the result as an array of dictionaries.
      ;; Each row of a query result is returned as a dictionary.
      (- (id) queryAsArray:(id) query is
-        (set result (self exec:query))
+        (set result (self query:query))
         (if result
             (then (set a (array))
                   ((result tupleCount) times:
@@ -44,7 +51,7 @@
      ;; with the top-level dictionary keyed by the specified key.
      ;; Each row of a query result is returned as a dictionary.
      (- (id) queryAsDictionary:(id) query withKey:(id) key is
-        (set result (self exec:query))
+        (set result (self query:query))
         (if result
             (then (set d (dict))
                   ((result tupleCount) times:
@@ -57,7 +64,7 @@
      ;; Perform a query and return a single result as a dictionary.
      ;; Returns nil if multiple matches exist.
      (- (id) queryAsValue:(id) query is
-        (set result (self exec:query))
+        (set result (self query:query))
         (if (eq (result tupleCount) 1)
             (then (result dictionaryForTuple:0))
             (else nil))))
