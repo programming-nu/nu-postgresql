@@ -174,6 +174,7 @@ const char *nameOfType(enum ECPGttype code)
 {
     PGconn *connection;
     NSMutableDictionary *connectionInfo;
+    NSMutableSet *queries;
 }
 
 @end
@@ -198,12 +199,14 @@ void notice_processor(void *arg, const char *message)
 {
     [super init];
     connectionInfo = [[NSMutableDictionary alloc] init];
+    queries = [[NSMutableSet alloc] init];
     return self;
 }
 
 - (void) dealloc
 {
     [connectionInfo release];
+    [queries release];
     [super dealloc];
 }
 
@@ -254,8 +257,17 @@ void notice_processor(void *arg, const char *message)
         NSLog(@"There is no connection to a database.");
         return nil;
     }
-    PGresult *preparationResult = PQprepare(connection, "", [query cStringUsingEncoding:NSUTF8StringEncoding], 0, 0);
-    PGresult *descriptionResult = PQdescribePrepared(connection, "");
+    const char *cquery = [query cStringUsingEncoding:NSUTF8StringEncoding];
+    if (![queries containsObject:query]) {
+        PGresult *preparationResult = PQprepare(connection, cquery, cquery, 0, 0);
+        [queries addObject:query];
+    }
+    /*
+    else {
+        NSLog(@"reusing query %@", query);
+    }
+    */
+    //PGresult *descriptionResult = PQdescribePrepared(connection, cquery);
     /*
     NSLog(@"prepared query expects %d arguments", PQnparams(descriptionResult));
     for (int i = 0; i < PQnparams(descriptionResult); i++) {
@@ -268,7 +280,7 @@ void notice_processor(void *arg, const char *message)
         NSString *stringValue = [[arguments objectAtIndex:i] stringValue];
         paramValues[i] = strdup([stringValue cStringUsingEncoding:NSUTF8StringEncoding]);
     }
-    PGresult *result = PQexecPrepared(connection, "", paramCount, (const char **) paramValues, 0, 0, 0);
+    PGresult *result = PQexecPrepared(connection, cquery, paramCount, (const char **) paramValues, 0, 0, 0);
     for (int i = 0; i < paramCount; i++) {
         free(paramValues[i]);
     }
