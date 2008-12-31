@@ -15,7 +15,8 @@
 ;;   See the License for the specific language governing permissions and
 ;;   limitations under the License.
 
-(class PGFieldType (ivar-accessors))
+(class PGFieldType (ivar-accessors)
+     (- (id) name is @name)) ;; required to avoid GNUstep conflict
 
 (class PGResult (ivar-accessors)
      (- (id) array is

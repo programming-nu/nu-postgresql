@@ -5,12 +5,12 @@
 (set SYSTEM ((NSString stringWithShellCommand:"uname") chomp))
 (case SYSTEM
       ("Darwin"
-               (set @cflags "-g -std=gnu99 -DDARWIN -I/usr/local/pgsql/include")
+               (set @cflags "-g -fobjc-gc -std=gnu99 -DDARWIN -I/usr/local/pgsql/include")
                (set @ldflags "-framework Foundation -framework Nu -lpq -L/usr/local/pgsql/lib"))
       ("Linux"
               (set @arch (list "i386"))
-              (set @cflags "-g -DLINUX -I/usr/local/pgsql/include -fconstant-string-class=NSConstantString ")
-              (set @ldflags "-L/usr/local/lib -lNuFound -lNu -lpq -L/usr/local/pgsql/lib"))
+              (set @cflags "-g -std=gnu99 -DLINUX -I/usr/include/GNUstep/Headers -I/usr/local/include -I/usr/local/pgsql/include -fconstant-string-class=NSConstantString ")
+              (set @ldflags "-L/usr/local/lib -lNu -lpq -L/usr/local/pgsql/lib"))
       (else nil))
 
 ;; framework description
@@ -30,7 +30,7 @@
 
 (task "install" => "framework" is
       (SH "sudo rm -rf /Library/Frameworks/#{@framework}.framework")
-      (SH "ditto #{@framework}.framework /Library/Frameworks/#{@framework}.framework"))
+      (SH "sudo cp -rp #{@framework}.framework /Library/Frameworks/#{@framework}.framework"))
 
 (task "test" => "framework" is
       (SH "nutest test/test_*.nu"))

@@ -218,7 +218,10 @@ void notice_processor(void *arg, const char *message)
         @"krbsrvname", @"service", nil];
 
     NSMutableString *connectionString = [NSMutableString string];
-    for (id key in [connectionInfo allKeys]) {
+    NSArray *keys = [connectionInfo allKeys];
+    int count = [keys count];
+    for (int i = 0; i < count; i++) {
+        id key = [keys objectAtIndex:i];
         id value;
         if ((value = [connectionInfo objectForKey:key])) {
             [connectionString appendFormat:@" %@='%@'", key, value];
