@@ -205,6 +205,7 @@ void notice_processor(void *arg, const char *message)
 
 - (void) dealloc
 {
+    PQfinish(connection);
     [connectionInfo release];
     [queries release];
     [super dealloc];
