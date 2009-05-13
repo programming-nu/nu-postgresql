@@ -3,6 +3,17 @@
 #include "libpq-fe.h"
 #include "ecpgtype.h"
 
+#include "uuid/uuid.h"
+
+static NSString *uuidString()
+{
+    uuid_t uu;
+    uuid_generate(uu);
+    char value[37];
+    uuid_unparse(uu, value);
+    return [NSString stringWithCString:value encoding:NSUTF8StringEncoding];
+}
+
 const char *nameOfType(enum ECPGttype code)
 {
     switch (code) {
@@ -174,7 +185,7 @@ const char *nameOfType(enum ECPGttype code)
 {
     PGconn *connection;
     NSMutableDictionary *connectionInfo;
-    NSMutableSet *queries;
+    NSMutableDictionary *queries;
 }
 
 @end
@@ -199,13 +210,14 @@ void notice_processor(void *arg, const char *message)
 {
     [super init];
     connectionInfo = [[NSMutableDictionary alloc] init];
-    queries = [[NSMutableSet alloc] init];
+    queries = [[NSMutableDictionary alloc] init];
     return self;
 }
 
 - (void) dealloc
 {
-    PQfinish(connection);
+    if (connection)
+       PQfinish(connection);
     [connectionInfo release];
     [queries release];
     [super dealloc];
@@ -253,6 +265,7 @@ void notice_processor(void *arg, const char *message)
 - (void) close
 {
     PQfinish(connection);
+    connection = 0;
 }
 
 - (PGResult *) query:(id)query withArguments:(id) arguments
@@ -262,29 +275,40 @@ void notice_processor(void *arg, const char *message)
         return nil;
     }
     const char *cquery = [query cStringUsingEncoding:NSUTF8StringEncoding];
-    if (![queries containsObject:query]) {
-        PGresult *preparationResult = PQprepare(connection, cquery, cquery, 0, 0);
-        [queries addObject:query];
+
+    NSString *queryName = [queries objectForKey:query];
+    if (!queryName) {
+        queryName = uuidString();
+        /* attempt to be more explict about query arguments. This doesn't seem to be necessary.
+        int nParams = [arguments count];
+        NSLog(@"number of parameters %d", nParams);
+        Oid *paramTypes = (const Oid *) malloc (nParams * sizeof (Oid));
+        for (int i = 0; i < nParams; i++) {
+           paramTypes[i] = 0;
+        }
+        PGresult *preparationResult = PQprepare(connection, cquery, cquery, nParams, paramTypes);
+        free(paramTypes);
+        */
+        PGresult *preparationResult = PQprepare(connection, [queryName cStringUsingEncoding:NSUTF8StringEncoding], cquery, 0, NULL);
+        [queries setObject:queryName forKey:query];
     }
-    /*
     else {
         NSLog(@"reusing query %@", query);
     }
-    */
-    //PGresult *descriptionResult = PQdescribePrepared(connection, cquery);
-    /*
+    NSLog(@"query name %@", queryName);
+    PGresult *descriptionResult = PQdescribePrepared(connection, [queryName cStringUsingEncoding:NSUTF8StringEncoding]);
     NSLog(@"prepared query expects %d arguments", PQnparams(descriptionResult));
     for (int i = 0; i < PQnparams(descriptionResult); i++) {
         NSLog(@"param %d type %s", i, nameOfType(PQparamtype(descriptionResult, i)));
     }
-    */
+
     int paramCount = [arguments count];
     char **paramValues = (char **) malloc (paramCount * sizeof(char *));
     for (int i = 0; i < paramCount; i++) {
         NSString *stringValue = [[arguments objectAtIndex:i] stringValue];
         paramValues[i] = strdup([stringValue cStringUsingEncoding:NSUTF8StringEncoding]);
     }
-    PGresult *result = PQexecPrepared(connection, cquery, paramCount, (const char **) paramValues, 0, 0, 0);
+    PGresult *result = PQexecPrepared(connection, [queryName cStringUsingEncoding:NSUTF8StringEncoding], paramCount, (const char **) paramValues, 0, 0, 0);
     for (int i = 0; i < paramCount; i++) {
         free(paramValues[i]);
     }
