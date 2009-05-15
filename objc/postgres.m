@@ -113,7 +113,7 @@ const char *nameOfType(enum ECPGttype code)
         }
         case PGRES_EMPTY_QUERY:
         {
-            NSLog(@"Empty query");
+            //NSLog(@"Empty query");
             break;
         }
         case PGRES_COPY_OUT:
@@ -293,15 +293,16 @@ void notice_processor(void *arg, const char *message)
         [queries setObject:queryName forKey:query];
     }
     else {
-        NSLog(@"reusing query %@", query);
+        //NSLog(@"reusing query %@", query);
     }
-    NSLog(@"query name %@", queryName);
+    //NSLog(@"query name %@", queryName);
     PGresult *descriptionResult = PQdescribePrepared(connection, [queryName cStringUsingEncoding:NSUTF8StringEncoding]);
+    /*
     NSLog(@"prepared query expects %d arguments", PQnparams(descriptionResult));
     for (int i = 0; i < PQnparams(descriptionResult); i++) {
         NSLog(@"param %d type %s", i, nameOfType(PQparamtype(descriptionResult, i)));
     }
-
+    */
     int paramCount = [arguments count];
     char **paramValues = (char **) malloc (paramCount * sizeof(char *));
     for (int i = 0; i < paramCount; i++) {

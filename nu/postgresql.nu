@@ -33,50 +33,51 @@
              (set row (self dictionaryForTuple:i))
              (d setValue:row forKey:(row valueForKey:key))))
         d)
-
+     
      (- (id) value is
         (if (eq (self tupleCount) 1)
             (then (self dictionaryForTuple:0))
             (else nil)))
-
+     
      (- (id) dictionaryForTuple:(int)i is
         (set d (dict))
         ((self fieldTypes) eachWithIndex:
          (do (ft j)
              (set key (ft name))
              (set value (self valueOfTuple:i field:j))
-             (d setObject:value forKey:key)))
+             (if value
+                 (d setObject:value forKey:key))))
         d))
 
 (class PGConnection (ivar-accessors)
-
+     
      ;; Perform a query and return the result as an array of dictionaries.
      ;; Each row of a query result is returned as a dictionary.
      (- (id) queryAsArray:(id) query is
         (set result (self query:query))
         (result array))
-
+     
      (- (id) queryAsArray:(id) query withArguments:(id) args is
         (set result (self query:query withArguments:args))
         (result array))
-
+     
      ;; Perform a query and return the result as a dictionary of dictionaries,
      ;; with the top-level dictionary keyed by the specified key.
      ;; Each row of a query result is returned as a dictionary.
      (- (id) queryAsDictionary:(id) query withKey:(id) key is
         (set result (self query:query))
         (result dictionaryWithKey:key))
-
+     
      (- (id) queryAsDictionary:(id) query withArguments:(id) args withKey:(id) key is
         (set result (self query:query withArguments:args))
         (result dictionaryWithKey:key))
-
+     
      ;; Perform a query and return a single result as a dictionary.
      ;; Returns nil if multiple matches exist.
      (- (id) queryAsValue:(id) query is
         (set result (self query:query))
         (result value))
-
+     
      (- (id) queryAsValue:(id) query withArguments:(id) args is
         (set result (self query:query withArguments:args))
         (result value)))
