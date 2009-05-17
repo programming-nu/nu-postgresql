@@ -3,14 +3,18 @@
 (set @nu_files 	  (filelist "^nu/.*nu$"))
 
 (set SYSTEM ((NSString stringWithShellCommand:"uname") chomp))
+
+(set pg_include_dir ((NSString stringWithShellCommand:"pg_config --includedir") chomp))
+(set pg_lib_dir ((NSString stringWithShellCommand:"pg_config --libdir") chomp))
+
 (case SYSTEM
       ("Darwin"
-               (set @cflags "-g -fobjc-gc -std=gnu99 -DDARWIN -I/usr/local/pgsql/include")
-               (set @ldflags "-framework Foundation -framework Nu -lpq -L/usr/local/pgsql/lib"))
+               (set @cflags "-g -fobjc-gc -std=gnu99 -DDARWIN -I#{pg_include_dir}")
+               (set @ldflags "-framework Foundation -framework Nu -lpq -L#{pg_lib_dir}"))
       ("Linux"
               (set @arch (list "i386"))
-              (set @cflags "-g -std=gnu99 -DLINUX -I/usr/include/GNUstep/Headers -I/usr/local/include -I/usr/local/pgsql/include -fconstant-string-class=NSConstantString ")
-              (set @ldflags "-L/usr/local/lib -lNu -lpq -L/usr/local/pgsql/lib"))
+              (set @cflags "-g -std=gnu99 -DLINUX -I/usr/include/GNUstep/Headers -I/usr/local/include -I#{pg_include_dir} -fconstant-string-class=NSConstantString ")
+              (set @ldflags "-L/usr/local/lib -lNu -lpq -L#{pg_lib_dir}"))
       (else nil))
 
 ;; framework description
