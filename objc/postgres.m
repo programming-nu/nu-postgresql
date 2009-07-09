@@ -197,6 +197,10 @@ void notice_processor(void *arg, const char *message)
 
 @implementation PGConnection
 
++ (int) isThreadSafe {
+  return PQisthreadsafe();
+}
+
 + (void) load
 {
     static int initialized = 0;
