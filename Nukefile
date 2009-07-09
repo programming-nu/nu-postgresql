@@ -9,7 +9,7 @@
 
 (case SYSTEM
       ("Darwin"
-               (set @cflags "-g -fobjc-gc -std=gnu99 -DDARWIN -I#{pg_include_dir}")
+               (set @cflags "-g -std=gnu99 -DDARWIN -I#{pg_include_dir}")
                (set @ldflags "-framework Foundation -framework Nu -lpq -L#{pg_lib_dir}"))
       ("Linux"
               (set @arch (list "i386"))
