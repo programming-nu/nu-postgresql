@@ -9,12 +9,14 @@
 
 (case SYSTEM
       ("Darwin"
-               (set @cflags "-g -fobjc-gc -std=gnu99 -DDARWIN -I#{pg_include_dir}")
+               (set @cflags "-g -std=gnu99 -DDARWIN -I#{pg_include_dir}")
                (set @ldflags "-framework Foundation -framework Nu -lpq -L#{pg_lib_dir}"))
       ("Linux"
               (set @arch (list "i386"))
-              (set @cflags "-g -std=gnu99 -DLINUX -I/usr/include/GNUstep/Headers -I/usr/local/include -I#{pg_include_dir} -fconstant-string-class=NSConstantString ")
-              (set @ldflags "-L/usr/local/lib -lNu -lpq -L#{pg_lib_dir}"))
+              (set gnustep_flags ((NSString stringWithShellCommand:"gnustep-config --objc-flags") chomp))
+              (set gnustep_libs ((NSString stringWithShellCommand:"gnustep-config --base-libs") chomp))
+              (set @cflags "-g -std=gnu99 -DLINUX -I/usr/local/include -I#{pg_include_dir} #{gnustep_flags}")
+              (set @ldflags "#{gnustep_libs} -lNu -lpq -luuid -L#{pg_lib_dir}"))
       (else nil))
 
 ;; framework description
