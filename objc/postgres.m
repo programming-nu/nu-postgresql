@@ -5,6 +5,8 @@
 
 #include "uuid/uuid.h"
 
+static int postgres_open_connections = 0;
+
 static NSString *uuidString()
 {
     uuid_t uu;
@@ -201,6 +203,10 @@ void notice_processor(void *arg, const char *message)
   return PQisthreadsafe();
 }
 
++ (int) connections {
+  return postgres_open_connections;
+}
+
 + (void) load
 {
     static int initialized = 0;
@@ -222,6 +228,9 @@ void notice_processor(void *arg, const char *message)
 {
     if (connection)
        PQfinish(connection);
+
+postgres_open_connections--;
+
     [connectionInfo release];
     [queries release];
     [super dealloc];
@@ -263,6 +272,7 @@ void notice_processor(void *arg, const char *message)
     }
     PQsetNoticeProcessor(connection, notice_processor, self);
     //NSLog(@"Connection succeeded.");
+postgres_open_connections++;
     return YES;
 }
 
