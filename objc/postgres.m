@@ -78,6 +78,11 @@ const char *nameOfType(enum ECPGttype code)
     return self;
 }
 
+- (void) dealloc {
+    [name release];
+    [super dealloc];
+}
+
 @end
 
 @interface PGResult : NSObject
@@ -104,7 +109,7 @@ const char *nameOfType(enum ECPGttype code)
             fields = PQnfields(result);
             fieldTypes = [[NSMutableArray alloc] init];
             for (int i = 0; i < fields; i++) {
-                [fieldTypes addObject:[[PGFieldType alloc] initWithResult:result index:i]];
+                [fieldTypes addObject:[[[PGFieldType alloc] initWithResult:result index:i] autorelease]];
             }
             break;
         }
@@ -304,6 +309,7 @@ postgres_open_connections++;
         free(paramTypes);
         */
         PGresult *preparationResult = PQprepare(connection, [queryName cStringUsingEncoding:NSUTF8StringEncoding], cquery, 0, NULL);
+        PQclear(preparationResult);
         [queries setObject:queryName forKey:query];
     }
     else {
@@ -317,6 +323,7 @@ postgres_open_connections++;
         NSLog(@"param %d type %s", i, nameOfType(PQparamtype(descriptionResult, i)));
     }
     */
+    PQclear(descriptionResult);
     int paramCount = [arguments count];
     char **paramValues = (char **) malloc (paramCount * sizeof(char *));
     for (int i = 0; i < paramCount; i++) {
