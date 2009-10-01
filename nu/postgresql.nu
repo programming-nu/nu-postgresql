@@ -49,7 +49,9 @@
                  (d setObject:value forKey:key))))
         d))
 
-(class PGConnection (ivar-accessors)
+(class PGConnection
+     (ivars)
+     (ivar-accessors)
      
      ;; Perform a query and return the result as an array of dictionaries.
      ;; Each row of a query result is returned as a dictionary.
