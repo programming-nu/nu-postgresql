@@ -50,7 +50,6 @@
         d))
 
 (class PGConnection
-     (ivars)
      (ivar-accessors)
      
      ;; Perform a query and return the result as an array of dictionaries.

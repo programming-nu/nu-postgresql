@@ -193,6 +193,7 @@ const char *nameOfType(enum ECPGttype code)
     PGconn *connection;
     NSMutableDictionary *connectionInfo;
     NSMutableDictionary *queries;
+    id schema;
 }
 
 @end
