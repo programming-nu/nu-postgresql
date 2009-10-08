@@ -5,6 +5,8 @@
 
 #include "uuid/uuid.h"
 
+@class NuCell;
+
 static int postgres_open_connections = 0;
 
 static NSString *uuidString()
@@ -78,7 +80,8 @@ const char *nameOfType(enum ECPGttype code)
     return self;
 }
 
-- (void) dealloc {
+- (void) dealloc
+{
     [name release];
     [super dealloc];
 }
@@ -205,12 +208,14 @@ void notice_processor(void *arg, const char *message)
 
 @implementation PGConnection
 
-+ (int) isThreadSafe {
-  return PQisthreadsafe();
++ (int) isThreadSafe
+{
+    return PQisthreadsafe();
 }
 
-+ (int) connections {
-  return postgres_open_connections;
++ (int) connections
+{
+    return postgres_open_connections;
 }
 
 + (void) load
@@ -233,9 +238,9 @@ void notice_processor(void *arg, const char *message)
 - (void) dealloc
 {
     if (connection)
-       PQfinish(connection);
+        PQfinish(connection);
 
-postgres_open_connections--;
+    postgres_open_connections--;
 
     [connectionInfo release];
     [queries release];
@@ -278,7 +283,7 @@ postgres_open_connections--;
     }
     PQsetNoticeProcessor(connection, notice_processor, self);
     //NSLog(@"Connection succeeded.");
-postgres_open_connections++;
+    postgres_open_connections++;
     return YES;
 }
 
@@ -288,8 +293,19 @@ postgres_open_connections++;
     connection = 0;
 }
 
-- (PGResult *) query:(id)query withArguments:(id) arguments
+- (PGResult *) query:(id)query withArguments:(id) _arguments
 {
+    // tolerate a few different types of arguments
+    NSArray *arguments;
+                                                  // arrays
+    if ([_arguments isKindOfClass:[NSArray class]])
+        arguments = _arguments;
+                                                  // lists
+    else if ([_arguments isKindOfClass:[NuCell class]])
+        arguments = [_arguments array];
+    else                                          // scalars
+        arguments = [NSArray arrayWithObject:_arguments];
+
     if (connection == nil) {
         NSLog(@"There is no connection to a database.");
         return nil;
@@ -331,7 +347,11 @@ postgres_open_connections++;
         NSString *stringValue = [[arguments objectAtIndex:i] stringValue];
         paramValues[i] = strdup([stringValue cStringUsingEncoding:NSUTF8StringEncoding]);
     }
-    PGresult *result = PQexecPrepared(connection, [queryName cStringUsingEncoding:NSUTF8StringEncoding], paramCount, (const char **) paramValues, 0, 0, 0);
+    PGresult *result = PQexecPrepared(connection,
+        [queryName cStringUsingEncoding:NSUTF8StringEncoding],
+        paramCount,
+        (const char **) paramValues,
+        0, 0, 0);
     for (int i = 0; i < paramCount; i++) {
         free(paramValues[i]);
     }
